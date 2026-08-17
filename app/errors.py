@@ -1,0 +1,37 @@
+"""应用层异常类型。"""
+
+
+class AppError(Exception):
+    """可以转换为明确 CLI 提示的应用异常。"""
+
+
+class ConfigurationError(AppError):
+    """环境变量或 Provider 配置错误。"""
+
+
+class UserInputError(AppError):
+    """用户输入不符合当前 CLI 要求。"""
+
+
+class ProviderError(AppError):
+    """模型 Provider 调用失败。"""
+
+
+class ProviderAuthenticationError(ProviderError):
+    """API Key 无效或无权访问模型。"""
+
+
+class ProviderTimeoutError(ProviderError):
+    """模型请求超时。"""
+
+
+class ProviderRateLimitError(ProviderError):
+    """模型服务触发限流或账户额度不足。"""
+
+
+class ProviderConnectionError(ProviderError):
+    """无法连接模型 Provider。"""
+
+
+class ProviderResponseError(ProviderError):
+    """Provider 返回错误状态或非预期响应。"""
