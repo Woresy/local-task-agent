@@ -38,3 +38,6 @@ class ProviderResponseError(ProviderError):
 
 class ToolExecutionError(AppError):
     """工具执行过程中出现非预期异常。"""
+
+class IntentRecognitionError(AppError):
+    """意图识别结果为空、格式错误或违反协议。"""

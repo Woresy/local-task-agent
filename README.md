@@ -35,13 +35,43 @@ python -c "from app.tools import query_status; print(query_status('TASK-1001').t
 python -c "from app.tools import create_summary; print(create_summary({'stage': 2}).to_json())"
 ```
 
-阶段 2 尚未实现：
+## 阶段 3：结构化意图识别
 
-- 意图识别
-- 参数缺失追问
-- 工具选择与安全路由
-- Agent tool loop
-- 会话状态
+当前支持把用户文本识别为以下意图：
+
+- `lookup_metric`
+- `query_status`
+- `create_summary`
+- `general_chat`
+- `unknown`
+
+识别结果包含：
+
+- `intent`
+- `arguments`
+- `confidence`
+- `reason`
+
+参数允许不完整；当前尚未执行缺参追问或工具路由。
+
+### 查看意图识别结果
+
+```bash
+python -m app.intent_cli --message "查询 active_users"
+```
+
+示例输出：
+
+```json
+{
+  "intent": "lookup_metric",
+  "arguments": {
+    "name": "active_users"
+  },
+  "confidence": 0.95,
+  "reason": "用户明确查询业务指标"
+}
+```
 
 ## 环境要求
 
