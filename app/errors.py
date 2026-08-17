@@ -35,3 +35,6 @@ class ProviderConnectionError(ProviderError):
 
 class ProviderResponseError(ProviderError):
     """Provider 返回错误状态或非预期响应。"""
+
+class ToolExecutionError(AppError):
+    """工具执行过程中出现非预期异常。"""

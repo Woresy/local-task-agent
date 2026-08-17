@@ -2,7 +2,7 @@
 
 本地运行的任务型 AI 聊天机器人。
 
-当前为阶段 1，只包含：
+## 阶段 1，只包含：
 
 - DeepSeek OpenAI-compatible SDK 配置
 - system prompt 与 messages
@@ -10,7 +10,38 @@
 - 超时、认证、限流和异常响应处理
 - 基础单元测试
 
-当前尚未接入工具和 Agent loop。
+
+## 阶段 2：本地工具
+
+当前提供三个可独立执行的本地工具：
+
+- `lookup_metric(name)`：查询业务指标
+- `query_status(id)`：查询任务状态
+- `create_summary(data)`：生成确定性的结构化摘要
+
+工具当前使用本地演示数据，不依赖模型执行。
+
+### 直接运行工具
+
+```bash
+python -c "from app.tools import lookup_metric; print(lookup_metric('active_users').to_json())"
+```
+
+```bash
+python -c "from app.tools import query_status; print(query_status('TASK-1001').to_json())"
+```
+
+```bash
+python -c "from app.tools import create_summary; print(create_summary({'stage': 2}).to_json())"
+```
+
+阶段 2 尚未实现：
+
+- 意图识别
+- 参数缺失追问
+- 工具选择与安全路由
+- Agent tool loop
+- 会话状态
 
 ## 环境要求
 
