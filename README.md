@@ -72,6 +72,15 @@ python -m app.intent_cli --message "查询 active_users"
   "reason": "用户明确查询业务指标"
 }
 ```
+## 阶段 4：参数校验与缺参追问
+
+阶段 4 在执行工具前检查结构化 arguments，支持三种结果：
+
+- `ready`：参数完整，可以进入工具路由
+- `needs_clarification`：缺少必填参数，需要追问用户
+- `invalid`：参数类型错误或包含未定义字段
+
+当前阶段只校验参数并生成追问，不执行工具，不更新会话状态。
 
 ## 环境要求
 

@@ -41,3 +41,6 @@ class ToolExecutionError(AppError):
 
 class IntentRecognitionError(AppError):
     """意图识别结果为空、格式错误或违反协议。"""
+
+class ArgumentValidationError(AppError):
+    """参数校验器收到无法处理的输入或配置。"""
