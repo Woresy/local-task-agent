@@ -88,7 +88,9 @@ python -m app.intent_cli --message "查询 active_users"
 python -m app.validation_cli \
   --tool query_status \
   --arguments '{}'
+```
 
+## 阶段 5：安全工具路由与单次执行
 
 阶段 5 通过静态 `TOOL_REGISTRY` 白名单执行本地工具。
 
@@ -107,6 +109,28 @@ python -m app.validation_cli \
 python -m app.execution_cli \
   --tool lookup_metric \
   --arguments '{"name":"active_users"}'
+```
+
+## 阶段 6：真实 Agent tool loop
+
+阶段 6 使用 OpenAI-compatible Chat Completions `tools`：
+
+1. 模型返回普通文本或 `tool_calls`
+2. 程序解析 function arguments
+3. 使用阶段 4 校验参数
+4. 使用阶段 5 白名单执行工具
+5. 将 `ToolResult` 作为 `tool message` 回传模型
+6. 模型生成最终回答
+
+每次运行最多允许 4 轮模型请求，防止无限工具循环。
+
+### 运行一次 Agent
+
+```bash
+python -m app.agent_cli \
+  --message "查询 active_users" \
+  --show-steps
+```
 
 ## 环境要求
 

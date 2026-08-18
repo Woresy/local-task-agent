@@ -55,3 +55,15 @@ class ToolNotReadyError(ToolExecutionError):
 
 class ToolContractError(ToolExecutionError):
     """工具返回值违反统一 ToolResult 契约。"""
+
+
+class AgentError(AppError):
+    """Agent orchestration 过程中的基础异常。"""
+
+
+class AgentProtocolError(AgentError):
+    """模型返回了无法安全处理的 Agent 协议数据。"""
+
+
+class AgentLoopLimitError(AgentError):
+    """Agent 在最大模型轮数内没有产生最终回答。"""
