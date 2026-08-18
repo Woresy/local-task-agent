@@ -44,3 +44,14 @@ class IntentRecognitionError(AppError):
 
 class ArgumentValidationError(AppError):
     """参数校验器收到无法处理的输入或配置。"""
+
+class UnknownToolError(ToolExecutionError):
+    """请求的工具不在允许执行的注册表中。"""
+
+
+class ToolNotReadyError(ToolExecutionError):
+    """工具参数尚未达到可执行状态。"""
+
+
+class ToolContractError(ToolExecutionError):
+    """工具返回值违反统一 ToolResult 契约。"""

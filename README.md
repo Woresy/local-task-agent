@@ -82,6 +82,32 @@ python -m app.intent_cli --message "查询 active_users"
 
 当前阶段只校验参数并生成追问，不执行工具，不更新会话状态。
 
+### 查看参数校验结果
+
+```bash
+python -m app.validation_cli \
+  --tool query_status \
+  --arguments '{}'
+
+
+阶段 5 通过静态 `TOOL_REGISTRY` 白名单执行本地工具。
+
+执行前必须满足：
+
+- 参数校验状态为 `ready`
+- 工具名称存在于白名单
+- 工具返回统一的 `ToolResult`
+- 返回结果中的工具名称与请求一致
+
+未知工具、缺参和非法参数不会执行。
+
+### 单次执行工具
+
+```bash
+python -m app.execution_cli \
+  --tool lookup_metric \
+  --arguments '{"name":"active_users"}'
+
 ## 环境要求
 
 - Python 3.10+
