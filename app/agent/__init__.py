@@ -7,6 +7,7 @@ from app.agent.model import (
 from app.agent.models import (
     AgentFinishReason,
     AgentModelReply,
+    AgentRunOutcome,
     AgentRunResult,
     AgentToolStep,
     ModelToolCall,
@@ -18,6 +19,7 @@ __all__ = [
     "AgentFinishReason",
     "AgentModel",
     "AgentModelReply",
+    "AgentRunOutcome",
     "AgentRunResult",
     "AgentRunner",
     "AgentToolStep",

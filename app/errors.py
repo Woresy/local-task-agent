@@ -67,3 +67,6 @@ class AgentProtocolError(AgentError):
 
 class AgentLoopLimitError(AgentError):
     """Agent 在最大模型轮数内没有产生最终回答。"""
+
+class SessionError(AppError):
+    """短期会话状态无效或更新失败。"""

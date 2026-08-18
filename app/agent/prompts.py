@@ -32,10 +32,10 @@ AGENT_SYSTEM_PROMPT = """
 """.strip()
 
 
-def build_agent_messages(
+def normalize_agent_user_text(
     user_text: str,
-) -> list[ChatCompletionMessageParam]:
-    """构造一次 Agent 运行的初始 messages。"""
+) -> str:
+    """校验并规范化一条用户输入。"""
 
     if not isinstance(user_text, str):
         raise UserInputError(
@@ -55,13 +55,38 @@ def build_agent_messages(
             f"{MAX_USER_TEXT_LENGTH} 个字符。"
         )
 
+    return normalized
+
+
+def build_agent_system_message(
+) -> ChatCompletionMessageParam:
+    """构造 Agent system message。"""
+
+    return {
+        "role": "system",
+        "content": AGENT_SYSTEM_PROMPT,
+    }
+
+
+def build_agent_user_message(
+    user_text: str,
+) -> ChatCompletionMessageParam:
+    """构造一条经过校验的 user message。"""
+
+    return {
+        "role": "user",
+        "content": normalize_agent_user_text(
+            user_text
+        ),
+    }
+
+
+def build_agent_messages(
+    user_text: str,
+) -> list[ChatCompletionMessageParam]:
+    """构造不带历史记录的单轮初始 messages。"""
+
     return [
-        {
-            "role": "system",
-            "content": AGENT_SYSTEM_PROMPT,
-        },
-        {
-            "role": "user",
-            "content": normalized,
-        },
+        build_agent_system_message(),
+        build_agent_user_message(user_text),
     ]

@@ -3,6 +3,10 @@
 from dataclasses import dataclass
 from typing import Literal
 
+from openai.types.chat import (
+    ChatCompletionMessageParam,
+)
+
 from app.tools.models import (
     JSONValue,
     ToolName,
@@ -109,3 +113,19 @@ class AgentRunResult:
                 for step in self.tool_steps
             ],
         }
+
+@dataclass(frozen=True)
+class AgentRunOutcome:
+    """Agent 结果及可提交的完整 messages。"""
+
+    result: AgentRunResult
+    messages: tuple[
+        ChatCompletionMessageParam,
+        ...
+    ]
+
+    def __post_init__(self) -> None:
+        if not self.messages:
+            raise ValueError(
+                "AgentRunOutcome.messages 不能为空。"
+            )

@@ -1,5 +1,6 @@
 """真实 tool calling Agent 的有限循环。"""
 
+from collections.abc import Sequence
 from typing import cast
 
 from openai.types.chat import (
@@ -12,6 +13,8 @@ from app.agent.messages import (
 )
 from app.agent.model import AgentModel
 from app.agent.models import (
+    AgentModelReply,
+    AgentRunOutcome,
     AgentRunResult,
     AgentToolStep,
 )
@@ -57,11 +60,29 @@ class AgentRunner:
         self,
         user_text: str,
     ) -> AgentRunResult:
-        """完成一次用户输入对应的 Agent 运行。"""
+        """兼容原有的无历史单轮调用。"""
+
+        outcome = self.run_messages(
+            build_agent_messages(user_text)
+        )
+        return outcome.result
+
+    def run_messages(
+        self,
+        initial_messages: Sequence[
+            ChatCompletionMessageParam
+        ],
+    ) -> AgentRunOutcome:
+        """基于已有 messages 完成当前 Agent 回合。"""
+
+        if not initial_messages:
+            raise AgentProtocolError(
+                "Agent messages 不能为空。"
+            )
 
         messages: list[
             ChatCompletionMessageParam
-        ] = build_agent_messages(user_text)
+        ] = list(initial_messages)
 
         tool_steps: list[AgentToolStep] = []
         model_rounds = 0
@@ -79,11 +100,17 @@ class AgentRunner:
                         "Agent 模型未返回最终文本。"
                     )
 
-                return AgentRunResult(
-                    answer=reply.content,
-                    finish_reason="completed",
-                    model_rounds=model_rounds,
-                    tool_steps=tuple(tool_steps),
+                messages.append(
+                    build_assistant_message(reply)
+                )
+                return AgentRunOutcome(
+                    result=AgentRunResult(
+                        answer=reply.content,
+                        finish_reason="completed",
+                        model_rounds=model_rounds,
+                        tool_steps=tuple(tool_steps),
+                    ),
+                    messages=tuple(messages),
                 )
 
             if len(reply.tool_calls) != 1:
@@ -111,22 +138,41 @@ class AgentRunner:
                         "工具缺参时未生成追问文本。"
                     )
 
-                return AgentRunResult(
-                    answer=question,
-                    finish_reason="needs_clarification",
-                    model_rounds=model_rounds,
-                    tool_steps=tuple(tool_steps),
+                messages.append(
+                    build_assistant_message(
+                        AgentModelReply(content=question)
+                    )
+                )
+                return AgentRunOutcome(
+                    result=AgentRunResult(
+                        answer=question,
+                        finish_reason=(
+                            "needs_clarification"
+                        ),
+                        model_rounds=model_rounds,
+                        tool_steps=tuple(tool_steps),
+                    ),
+                    messages=tuple(messages),
                 )
 
             if validation.status == "invalid":
-                return AgentRunResult(
-                    answer="\n".join(
-                        issue.message
-                        for issue in validation.issues
+                answer = "\n".join(
+                    issue.message
+                    for issue in validation.issues
+                )
+                messages.append(
+                    build_assistant_message(
+                        AgentModelReply(content=answer)
+                    )
+                )
+                return AgentRunOutcome(
+                    result=AgentRunResult(
+                        answer=answer,
+                        finish_reason="invalid_arguments",
+                        model_rounds=model_rounds,
+                        tool_steps=tuple(tool_steps),
                     ),
-                    finish_reason="invalid_arguments",
-                    model_rounds=model_rounds,
-                    tool_steps=tuple(tool_steps),
+                    messages=tuple(messages),
                 )
 
             result = self._router.execute(validation)

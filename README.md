@@ -90,9 +90,12 @@ python -m app.validation_cli \
   --arguments '{}'
 ```
 
-## 阶段 5：安全工具路由与单次执行
+## 阶段 5：工具选择、安全路由与 Agent 工具循环
 
-阶段 5 通过静态 `TOOL_REGISTRY` 白名单执行本地工具。
+阶段 5 先通过静态 `TOOL_REGISTRY` 白名单安全执行本地工具，
+再使用 OpenAI-compatible Chat Completions `tools` 形成真实 Agent tool loop。
+
+### 5.1 安全工具路由与单次执行
 
 执行前必须满足：
 
@@ -103,7 +106,7 @@ python -m app.validation_cli \
 
 未知工具、缺参和非法参数不会执行。
 
-### 单次执行工具
+#### 单次执行工具
 
 ```bash
 python -m app.execution_cli \
@@ -111,9 +114,9 @@ python -m app.execution_cli \
   --arguments '{"name":"active_users"}'
 ```
 
-## 阶段 6：真实 Agent tool loop
+### 5.2 真实 Agent tool loop
 
-阶段 6 使用 OpenAI-compatible Chat Completions `tools`：
+Agent 使用 OpenAI-compatible Chat Completions `tools`：
 
 1. 模型返回普通文本或 `tool_calls`
 2. 程序解析 function arguments
@@ -124,13 +127,67 @@ python -m app.execution_cli \
 
 每次运行最多允许 4 轮模型请求，防止无限工具循环。
 
-### 运行一次 Agent
+#### 运行一次 Agent
 
 ```bash
 python -m app.agent_cli \
   --message "查询 active_users" \
   --show-steps
 ```
+
+## 阶段 6：多轮 CLI 与系统错误处理
+
+阶段 6 使用 `ConversationSession` 在当前进程内保存短期会话状态，
+包括完整 Chat Completions messages、对话轮数和上一轮结束原因。
+
+当前支持：
+
+- 连续多轮对话，并把历史 messages 传给下一轮模型请求
+- 工具缺参后跨轮补齐参数
+- 使用 `/state` 查看当前会话状态
+- 使用 `/reset` 清空历史并保留 session ID
+- 使用 `/exit` 或 `/help` 退出或查看命令
+- 模型超时、限流或工具异常时保留上一份有效状态
+- 可选显示本轮真实工具执行步骤
+
+会话采用事务式更新：先基于旧状态运行完整 Agent 回合，成功后才提交新的
+`SessionState`。如果 Provider 或工具执行失败，本轮 user message 不会写入状态。
+
+### 运行多轮 CLI
+
+```bash
+python -m app.chat_cli --show-steps
+```
+
+指定本地会话标识：
+
+```bash
+python -m app.chat_cli \
+  --session-id demo-session \
+  --show-steps
+```
+
+### 跨轮补齐参数
+
+```text
+你：帮我查询任务状态
+助手：请提供要查询的任务 ID，例如 TASK-1001。
+你：TASK-1001
+助手：TASK-1001 正在运行，当前进度为 65%。
+```
+
+### 会话命令
+
+- `/state`：显示 session ID、轮数、messages 和是否等待补参
+- `/reset`：清除当前会话历史，只保留 system message
+- `/help`：显示可用命令
+- `/exit`：正常退出 CLI
+
+短期状态只保存在当前 Python 进程内，关闭程序后不会持久化到磁盘。
+
+## 阶段 7：验收测试、GitHub 与 Notion 交付（待实现）
+
+本阶段将补齐单元测试、对话测试、运行文档和项目记录，并完成最终交付。
 
 ## 环境要求
 
@@ -166,16 +223,24 @@ LOG_LEVEL=INFO
 
 ## 运行
 
-直接提供消息：
+推荐运行支持工具调用和短期状态的多轮 CLI：
+
+```bash
+python -m app.chat_cli --show-steps
+```
+
+运行一次真实 tool calling Agent：
+
+```bash
+python -m app.agent_cli \
+  --message "查询 active_users" \
+  --show-steps
+```
+
+阶段 1 的普通单轮聊天入口仍可使用：
 
 ```bash
 python -m app.main --message "请用一句话介绍你自己"
-```
-
-从终端输入：
-
-```bash
-python -m app.main
 ```
 
 ## 测试

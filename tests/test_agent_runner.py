@@ -306,3 +306,51 @@ def test_repeated_tool_calls_reach_loop_limit() -> None:
 
     with pytest.raises(AgentLoopLimitError):
         runner.run("查询 active_users")
+
+def test_run_messages_returns_final_history() -> None:
+    model = FakeAgentModel(
+        [
+            AgentModelReply(
+                content="已收到第二轮问题。",
+            )
+        ]
+    )
+    runner = AgentRunner(
+        model=cast(AgentModel, model),
+        router=ToolRouter(),
+    )
+
+    outcome = runner.run_messages(
+        [
+            {
+                "role": "system",
+                "content": "测试系统提示",
+            },
+            {
+                "role": "user",
+                "content": "第一轮问题",
+            },
+            {
+                "role": "assistant",
+                "content": "第一轮回答",
+            },
+            {
+                "role": "user",
+                "content": "第二轮问题",
+            },
+        ]
+    )
+
+    assert outcome.result.answer == (
+        "已收到第二轮问题。"
+    )
+    assert [
+        message["role"]
+        for message in outcome.messages
+    ] == [
+        "system",
+        "user",
+        "assistant",
+        "user",
+        "assistant",
+    ]
