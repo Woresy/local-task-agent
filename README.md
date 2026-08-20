@@ -185,9 +185,92 @@ python -m app.chat_cli \
 
 短期状态只保存在当前 Python 进程内，关闭程序后不会持久化到磁盘。
 
-## 阶段 7：验收测试、GitHub 与 Notion 交付（待实现）
+## 阶段 7：E2E 验收、极简页面与项目交付
 
-本阶段将补齐单元测试、对话测试、运行文档和项目记录，以及实现一个简易的页面，并完成最终交付。
+阶段 7 使用可重复的 Fake model 响应驱动完整应用链路，同时调用真实本地工具。
+测试不会消耗 Provider API 额度，也不会依赖模型输出的随机性。
+
+当前提供 13 条独立 E2E 对话测试，覆盖：
+
+1. 普通问候不调用工具
+2. 成功查询业务指标
+3. 成功查询任务状态
+4. 成功创建结构化摘要
+5. 工具返回 `not_found` 后由模型解释结果
+6. 缺少任务 ID 后跨轮补齐
+7. 缺少指标名称后跨轮补齐
+8. 缺少摘要数据后跨轮补齐
+9. 参数类型错误时不执行工具
+10. 未知工具失败且会话状态回滚
+11. 范围外请求明确拒绝
+12. Provider 超时时会话状态回滚
+13. 同一响应包含多个 tool calls 时拒绝执行并回滚
+
+### E2E 对话测试
+
+```bash
+python -m pytest tests/test_dialogues.py -q
+```
+
+预期结果：
+
+```text
+13 passed
+```
+
+### 极简本地页面
+
+页面和 JSON API 使用 Python 标准库实现，不需要安装额外 Web framework。
+服务默认只监听 `127.0.0.1`，复用与多轮 CLI 相同的 `ConversationSession`。
+
+```bash
+python -m app.web
+```
+
+浏览器访问：<http://127.0.0.1:8000>
+
+可选参数：
+
+```bash
+python -m app.web \
+  --host 127.0.0.1 \
+  --port 8000 \
+  --session-id web-local
+```
+
+页面支持连续聊天、显示真实工具步骤、查看状态和重置会话。关闭 Python
+进程后，页面的短期会话状态会丢失。
+
+### 验收矩阵
+
+| 验收项 | 实现与证据 |
+| --- | --- |
+| 本地连续多轮对话 | `app.chat_cli`、Web 页面与 `ConversationSession` |
+| 至少 3 类意图 | 5 类结构化意图与 3 类工具意图 |
+| 至少 2 个真实工具 | `lookup_metric`、`query_status`、`create_summary` |
+| 多轮补齐缺失参数 | 3 个跨轮补齐 E2E 场景 |
+| 未知工具不执行 | 未知工具回滚 E2E 与 Router 单元测试 |
+| 短期状态可查看 | CLI `/state`、页面状态面板与 `SessionState.to_json()` |
+| API Key 不入库 | `.env` 已忽略，只提交 `.env.example` |
+| Provider 错误提示 | 缺密钥、认证、超时、限流、连接和异常响应映射 |
+| 不少于 5 个单元测试 | 完整 pytest 测试套件 |
+| 不少于 10 个对话测试 | `tests/test_dialogues.py` 中 13 条 E2E |
+
+### 真实 Provider 手动验收
+
+自动化 E2E 使用 Fake model 保证稳定性；发布前仍应使用 `.env` 中的真实配置运行：
+
+```bash
+python -m app.chat_cli --show-steps
+```
+
+依次验证普通聊天、指标查询、任务查询、摘要生成和缺参跨轮补齐，确认 Provider
+能够真实返回 `tool_calls`，并且 CLI 显示真实工具执行步骤。
+
+本项目已于 2026-08-21 使用 `deepseek-v4-flash` 完成真实 API 手动验收。
+详细记录见 [`docs/manual_e2e.md`](docs/manual_e2e.md)。
+
+GitHub 仓库：<https://github.com/Woresy/local-task-agent>
 
 ## 环境要求
 
@@ -229,6 +312,14 @@ LOG_LEVEL=INFO
 python -m app.chat_cli --show-steps
 ```
 
+运行极简本地页面：
+
+```bash
+python -m app.web
+```
+
+浏览器访问：<http://127.0.0.1:8000>
+
 运行一次真实 tool calling Agent：
 
 ```bash
@@ -245,9 +336,23 @@ python -m app.main --message "请用一句话介绍你自己"
 
 ## 测试
 
+运行 13 条 E2E 对话测试：
+
+```bash
+python -m pytest tests/test_dialogues.py -q
+```
+
+运行完整测试：
+
 ```bash
 python -m compileall -q app tests
 python -m pytest -q
+```
+
+当前自动化测试结果：
+
+```text
+134 passed
 ```
 
 ## CLI 退出码

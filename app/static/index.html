@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Local Task Agent</title>
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">LOCAL · TOOL CALLING</p>
+          <h1>任务型 Agent</h1>
+          <p class="subtitle">查询指标、任务状态，或为结构化数据创建摘要。</p>
+        </div>
+        <span id="status" class="status">就绪</span>
+      </header>
+
+      <section id="messages" class="messages" aria-live="polite">
+        <article class="message assistant">
+          <span class="label">助手</span>
+          <p>请告诉我需要查询的指标、任务状态或摘要数据。</p>
+        </article>
+      </section>
+
+      <form id="chat-form" class="composer">
+        <label for="message">消息</label>
+        <textarea
+          id="message"
+          name="message"
+          rows="3"
+          maxlength="8000"
+          placeholder="例如：TASK-1001 现在是什么状态？"
+          required
+        ></textarea>
+        <div class="actions">
+          <button type="button" id="state-button" class="secondary">查看状态</button>
+          <button type="button" id="reset-button" class="secondary">重置会话</button>
+          <button type="submit" id="send-button">发送</button>
+        </div>
+      </form>
+
+      <details id="state-panel" class="state-panel">
+        <summary>短期会话状态</summary>
+        <pre id="state-output">尚未读取。</pre>
+      </details>
+    </main>
+
+    <script src="/static/app.js" defer></script>
+  </body>
+</html>

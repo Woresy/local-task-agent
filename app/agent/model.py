@@ -93,6 +93,11 @@ class OpenAICompatibleAgentModel:
                     tools=list(TOOL_DEFINITIONS),
                     tool_choice="auto",
                     max_tokens=self._max_tokens,
+                    extra_body={
+                        "thinking":{
+                            "type": "disabled"
+                        }
+                    },
                 )
             )
         except APITimeoutError as exc:
